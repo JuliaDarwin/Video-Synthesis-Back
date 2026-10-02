@@ -7,7 +7,7 @@ import com.videosynthesis.tfmBack.dto.ContactFormRequest;
 
 @RestController
 @RequestMapping("/api/contact")
-@CrossOrigin(origins = "http://localhost:4200") // Allows Angular to call this API during local dev
+@CrossOrigin(origins = "*")
 public class ContactController {
 
     private final EmailService emailService;

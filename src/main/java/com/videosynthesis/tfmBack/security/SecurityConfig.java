@@ -4,23 +4,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-
 import org.springframework.security.config.Customizer;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.security.authentication.AuthenticationManager;
-
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import com.videosynthesis.tfmBack.security.JWTAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -37,50 +36,53 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(authEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Allow login endpoints to anyone FIRST (Spring evaluates rules top-to-bottom)
+                        // Allow CORS preflight requests first
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Allow auth & errors
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
-                        // 2. Allow public access to uploaded images
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll()
-
-                        // 3. Allow CORS preflight requests
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 4. Protect Admin routes
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // 5. Allow contact form submissions without authentication
+                        // Allow public contact form submissions
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/contact").permitAll()
 
-                        // 6. Protect modifying requests (POST, PUT, DELETE) on the public APIs
+                        // Allow uploads
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll()
+
+                        // Protect admin endpoints
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // Protect POST/PUT/DELETE on case studies / api
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
 
-                        // 6. Let everyone view (GET) the public APIs (like case studies)
+                        // Allow GET on public APIs
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/**").permitAll()
 
                         .anyRequest().denyAll())
                 .httpBasic(Customizer.withDefaults());
+
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
-    // @Bean
-    // public UserDetailsService users() {
-    // UserDetails admin = User.builder()
-    // .username("admin")
-    // .password("{noop}password")
-    // .roles("ADMIN")
-    // .build();
-    // return new InMemoryUserDetailsManager(admin);
-    // }
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
