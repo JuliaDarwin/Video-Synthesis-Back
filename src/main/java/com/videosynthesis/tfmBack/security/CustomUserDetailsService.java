@@ -29,7 +29,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role))
+                .map(role -> new SimpleGrantedAuthority(role.startsWith("ROLE_") ? role : "ROLE_" + role))
                 .collect(Collectors.toList());
 
         return new User(user.getUsername(), user.getPassword(), authorities);

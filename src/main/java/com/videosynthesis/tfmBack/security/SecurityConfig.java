@@ -55,7 +55,10 @@ public class SecurityConfig {
                         // 4. Protect Admin routes
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // 5. Protect modifying requests (POST, PUT, DELETE) on the public APIs
+                        // 5. Allow contact form submissions without authentication
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/contact").permitAll()
+
+                        // 6. Protect modifying requests (POST, PUT, DELETE) on the public APIs
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
