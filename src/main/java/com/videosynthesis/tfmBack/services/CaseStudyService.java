@@ -39,9 +39,11 @@ public class CaseStudyService {
         return caseStudyRepo.save(caseStudy);
     }
 
-    public CaseStudy updateCaseStudyByTitle(String title, CaseStudy caseStudy) {
-        CaseStudy existingCaseStudy = caseStudyRepo.findByTitle(title)
-                .orElseGet(() -> caseStudyRepo.findBySlug(title).orElse(null));
+    public CaseStudy updateCaseStudyByTitle(String identifier, CaseStudy caseStudy) {
+        CaseStudy existingCaseStudy = caseStudyRepo.findById(identifier)
+                .or(() -> caseStudyRepo.findFirstBySlug(identifier))
+                .or(() -> caseStudyRepo.findFirstByTitle(identifier))
+                .orElse(null);
 
         if (existingCaseStudy != null) {
             existingCaseStudy.setSlug(caseStudy.getSlug());
@@ -73,13 +75,19 @@ public class CaseStudyService {
         caseStudyRepo.deleteById(id);
     }
 
-    public void deleteCaseStudyByTitle(String title) {
-        CaseStudy existing = caseStudyRepo.findByTitle(title)
-                .orElseGet(() -> caseStudyRepo.findBySlug(title).orElse(null));
-        if (existing != null) {
-            caseStudyRepo.delete(existing);
-        } else {
-            caseStudyRepo.deleteByTitle(title);
+    public void deleteCaseStudyByTitle(String identifier) {
+        List<CaseStudy> bySlug = caseStudyRepo.findAllBySlug(identifier);
+        if (!bySlug.isEmpty()) {
+            caseStudyRepo.deleteAll(bySlug);
+            return;
+        }
+        List<CaseStudy> byTitle = caseStudyRepo.findAllByTitle(identifier);
+        if (!byTitle.isEmpty()) {
+            caseStudyRepo.deleteAll(byTitle);
+            return;
+        }
+        if (caseStudyRepo.existsById(identifier)) {
+            caseStudyRepo.deleteById(identifier);
         }
     }
 }

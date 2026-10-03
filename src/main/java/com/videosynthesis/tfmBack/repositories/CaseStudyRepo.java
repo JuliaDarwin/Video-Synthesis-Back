@@ -18,4 +18,6 @@ public interface CaseStudyRepo extends MongoRepository<CaseStudy, String> {
 
     Optional<CaseStudy> findBySlug(String slug);
     Optional<CaseStudy> findFirstBySlug(String slug);
+    List<CaseStudy> findAllByTitle(String title);
+    List<CaseStudy> findAllBySlug(String slug);
 }
