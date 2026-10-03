@@ -19,11 +19,11 @@ public class CaseStudyService {
     }
 
     public Optional<CaseStudy> getCaseStudyByTitle(String title) {
-        return caseStudyRepo.findByTitle(title);
+        return caseStudyRepo.findFirstByTitle(title);
     }
 
     public Optional<CaseStudy> getCaseStudyBySlug(String slug) {
-        return caseStudyRepo.findBySlug(slug);
+        return caseStudyRepo.findFirstBySlug(slug);
     }
 
     public List<CaseStudy> getFeatured() {

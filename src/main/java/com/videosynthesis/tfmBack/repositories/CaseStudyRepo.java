@@ -10,10 +10,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CaseStudyRepo extends MongoRepository<CaseStudy, String> {
     Optional<CaseStudy> findByTitle(String title);
+    Optional<CaseStudy> findFirstByTitle(String title);
 
     void deleteByTitle(String title);
 
     List<CaseStudy> findByShowCaseTrue();
 
     Optional<CaseStudy> findBySlug(String slug);
+    Optional<CaseStudy> findFirstBySlug(String slug);
 }
